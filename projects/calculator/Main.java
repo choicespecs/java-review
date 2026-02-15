@@ -3,8 +3,10 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
+        // Create a Scanner object to read user input from the console
         Scanner scanner = new Scanner(System.in);
 
+        // Print a welcome message and instructions for the user
         System.out.println("Simple Calculator");
         System.out.println("Commands: add x y | sub x y | mul x y | div x y | exit");
 
@@ -44,7 +46,7 @@ public class Main {
             int result;
             switch (op) {
                 case "add":
-                    result = a + b;
+                    result = a + b  ;
                     break;
                 case "sub":
                     result = a - b;
