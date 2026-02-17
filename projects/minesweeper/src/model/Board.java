@@ -150,32 +150,19 @@ public class Board {
     }
 
 public void print(boolean revealAll) {
-    // column headers
-    System.out.print("   ");
-    for (int c = 0; c < cols; c++) System.out.print(c + " ");
+    // Column header
+    System.out.print("   "); // left padding for row numbers
+    for (int c = 0; c < cols; c++) {
+        System.out.printf("%3d", c);
+    }
     System.out.println();
 
+    // Rows
     for (int r = 0; r < rows; r++) {
-        // row header
-        System.out.printf("%2d ", r);
-
+        System.out.printf("%3d", r); // row label padded
         for (int c = 0; c < cols; c++) {
-            Cell cell = cells[r][c];
-            char ch;
-
-            if (revealAll) {
-                if (cell.isMine()) ch = '*';
-                else if (cell.getAdjacentMines() == 0) ch = '.';
-                else ch = (char) ('0' + cell.getAdjacentMines());
-            } else {
-                if (cell.isFlagged()) ch = 'F';
-                else if (!cell.isRevealed()) ch = '#';
-                else if (cell.isMine()) ch = '*';
-                else if (cell.getAdjacentMines() == 0) ch = '.';
-                else ch = (char) ('0' + cell.getAdjacentMines());
-            }
-
-            System.out.print(ch + " ");
+            String s = cellToString(r, c, revealAll); // ".", "*", "1", etc.
+            System.out.printf("%3s", s);
         }
         System.out.println();
     }
@@ -204,5 +191,24 @@ public void print(boolean revealAll) {
     public int getCols() { 
         return cols; 
     }
+
+private String cellToString(int r, int c, boolean revealAll) {
+    Cell cell = cells[r][c];
+
+    // If we're revealing all, show the true underlying board
+    if (revealAll) {
+        if (cell.isMine()) return "*";
+        int n = cell.getAdjacentMines();
+        return n == 0 ? "." : String.valueOf(n);
+    }
+
+    // Normal gameplay view
+    if (cell.isFlagged()) return "F";
+    if (!cell.isRevealed()) return ".";
+    if (cell.isMine()) return "*"; // only happens if you clicked a mine
+    int n = cell.getAdjacentMines();
+    return n == 0 ? "." : String.valueOf(n);
+}
+
 
 }

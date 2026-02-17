@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./run.sh <projectName> [args...]
-# Example: ./run.sh calculator 2 + 3
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECTS_DIR="$ROOT_DIR/projects"
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <projectName> [program args...]"
-  echo "Example: $0 calculator 2 + 3"
   exit 1
 fi
 
@@ -20,25 +16,46 @@ PROJECT_DIR="$PROJECTS_DIR/$PROJECT_NAME"
 
 if [[ ! -d "$PROJECT_DIR" ]]; then
   echo "Project folder not found: $PROJECT_DIR"
-  echo "Available projects:"
-  (cd "$PROJECTS_DIR" && ls -1) || true
   exit 1
 fi
 
-MAIN_JAVA="$PROJECT_DIR/Main.java"
-if [[ ! -f "$MAIN_JAVA" ]]; then
-  echo "Expected Main.java not found in: $PROJECT_DIR"
-  echo "Either create Main.java, or use the auto-detect version."
-  exit 1
+SRC_DIR="$PROJECT_DIR/src"
+SEARCH_DIR="$PROJECT_DIR"
+if [[ -d "$SRC_DIR" ]]; then
+  SEARCH_DIR="$SRC_DIR"
 fi
 
 BIN_DIR="$PROJECT_DIR/bin"
 mkdir -p "$BIN_DIR"
 
+JAVA_FILES=$(find "$SEARCH_DIR" -type f -name "*.java")
+
+if [[ -z "$JAVA_FILES" ]]; then
+  echo "No .java files found."
+  exit 1
+fi
+
 echo "Compiling: $PROJECT_NAME"
-# Compile ALL .java files in the project folder (supports helper classes)
-javac -d "$BIN_DIR" "$PROJECT_DIR"/*.java
+javac -d "$BIN_DIR" $JAVA_FILES
 
-echo "Running: $PROJECT_NAME (Main)"
-java -cp "$BIN_DIR" Main "$@"
+# Auto-detect main class
+MAIN_FILE=$(grep -rl "public static void main" "$SEARCH_DIR" | head -n 1 || true)
 
+if [[ -z "$MAIN_FILE" ]]; then
+  echo "No main method found."
+  exit 1
+fi
+
+PKG=$(grep -E '^\s*package\s+[a-zA-Z0-9_.]+\s*;' "$MAIN_FILE" | \
+      sed -E 's/^\s*package\s+([a-zA-Z0-9_.]+)\s*;\s*$/\1/')
+
+CLS=$(basename "$MAIN_FILE" .java)
+
+if [[ -n "$PKG" ]]; then
+  MAIN_CLASS="$PKG.$CLS"
+else
+  MAIN_CLASS="$CLS"
+fi
+
+echo "Running: $PROJECT_NAME ($MAIN_CLASS)"
+java -cp "$BIN_DIR" "$MAIN_CLASS" "$@"

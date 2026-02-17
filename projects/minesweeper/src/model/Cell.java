@@ -1,5 +1,4 @@
-package model; 
-
+package model;
 public class Cell {
     private boolean isMine;
     private boolean isRevealed;
